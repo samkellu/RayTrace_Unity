@@ -1,0 +1,10 @@
+/Library
+/Logs
+/obj
+/Temp
+/ProjectSettings
+/UserSettings
+/.vs
+/*.csproj
+/unity-raytracing.sln
+/UpgradeLog.htm

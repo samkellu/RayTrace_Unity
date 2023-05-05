@@ -35,10 +35,10 @@ int _NumRays;
 RWTexture2D<float4> Result;
 
 // PCG from shadertoy.com / Sebastian Lague
-float randomNumber(inout uint rngState) {
+float randomNumber(inout uint state) {
     
-    rngState *= 747796405 + 2891336453;
-    uint result = ((rngState >> ((rngState >> 28) + 4)) ^ rngState) * 277803737;
+    state = state * 747796405 + 2891336453;
+    uint result = ((state >> ((state >> 28) + 4)) ^ state) * 277803737;
     result = (result >> 22) ^ result;
     return result / 4294967295.0;
 } 
@@ -50,7 +50,7 @@ float3 randomHemisphereDirection(float3 hitNormal, inout uint rngState) {
     float z = randomNumber(rngState);
     float3 newDir = normalize(float3(x, y, z));
 
-    return newDir * sign(dot(newDir, hitNormal));
+    return newDir;// * sign(dot(hitNormal, newDir));
 }
 
 RayCollision sphereCollision(Ray ray) {
@@ -101,6 +101,7 @@ float3 Trace(Ray ray, inout uint rngState) {
         if (rc.distance < 1.#INF) {
             ray.src = rc.position;
             ray.dir = randomHemisphereDirection(rc.normal, rngState);
+            // ray.dir = reflect(ray.dir, rc.normal);
 
             light += rc.emissionColour * rc.emissionStrength * colour;
             colour *= rc.colour;
@@ -131,10 +132,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     uint2 numPixels = uint2(width, height);
     uint2 pixelCoord = uv * numPixels;
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
+    uint rngState = pixelIndex;
 
     float3 sum = float3(0, 0, 0);
     for (int i = 0; i < _NumRays; i++) {
-        sum += Trace(ray, pixelIndex);
+        sum += Trace(ray, rngState);
     }
 
     float3 output = sum/_NumRays;

@@ -11,6 +11,7 @@ public struct Sphere {
     public float emissionStrength;
 }
 
+[ExecuteAlways, ImageEffectAllowedInSceneView]
 public class RayTraceCS : MonoBehaviour
 {
 
@@ -20,7 +21,15 @@ public class RayTraceCS : MonoBehaviour
     public int numRays;
     public int width;
     public int height;
+    public int frameNum = 0;
     ComputeBuffer sphereBuffer;
+    RenderTexture prevFrame;
+
+    public void Start() {
+        prevFrame = new RenderTexture(width, height, 0);
+        prevFrame.enableRandomWrite = true;
+        prevFrame.Create();
+    }
 
     public void OnRenderImage(RenderTexture src, RenderTexture dest) {
 
@@ -32,6 +41,7 @@ public class RayTraceCS : MonoBehaviour
 
         shader.SetInt("_Bounces", bounces);
         shader.SetInt("_NumRays", numRays);
+        shader.SetInt("_FrameNum", frameNum++);
         shader.SetInt("_NumSpheres", spheres.Length);
 
         sphereBuffer = new ComputeBuffer(spheres.Length, sizeof(float) * 11);
@@ -42,6 +52,7 @@ public class RayTraceCS : MonoBehaviour
         rt.enableRandomWrite = true;
         rt.Create();
         shader.SetTexture(0, "Result", rt);
+        shader.SetTexture(0, "_PrevFrame", prevFrame);
 
         int threadsX = Mathf.CeilToInt(width / 8.0f);
         int threadsY = Mathf.CeilToInt(height / 8.0f);
@@ -50,5 +61,9 @@ public class RayTraceCS : MonoBehaviour
         Graphics.Blit(rt, dest);
         rt.Release();
         sphereBuffer.Release();
+    }
+
+    public void OnDestroy() {
+        prevFrame.Release();
     }
 }

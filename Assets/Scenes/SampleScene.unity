@@ -269,7 +269,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 70
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -294,14 +294,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0.04928556, y: 0, z: 0, w: 0.9987847}
   m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -5.65, y: 0, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -315,23 +315,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shader: {fileID: 7200000, guid: e6b655efa97507242b849bd9979c3dd0, type: 3}
-  bounces: 4
+  bounces: 12
   spheres:
   - position: {x: -11, y: -2, z: 2}
     radius: 2
-    colour: {x: 0.23, y: 1, z: 0}
-    emissionColour: {x: 0.23, y: 1, z: 0}
+    colour: {x: 1, y: 0.6, z: 0}
+    emissionColour: {x: 0, y: 0, z: 0}
     emissionStrength: 0
-  - position: {x: 2.83, y: 0, z: 101}
+  - position: {x: -7.85, y: -2.84, z: 2.76}
+    radius: 1.6
+    colour: {x: 0, y: 0.8, z: 1}
+    emissionColour: {x: 0, y: 0, z: 0}
+    emissionStrength: 0
+  - position: {x: -5.44, y: -3.24, z: 3.6}
+    radius: 1.13
+    colour: {x: 0.6, y: 1, z: 0}
+    emissionColour: {x: 0, y: 0, z: 0}
+    emissionStrength: 0
+  - position: {x: -20.18, y: -3.24, z: 35.8}
+    radius: 4.56
+    colour: {x: 0.3, y: 0.43, z: 0.7}
+    emissionColour: {x: 0, y: 0, z: 0}
+    emissionStrength: 0
+  - position: {x: 58.58, y: 0, z: 64.39}
     radius: 24
-    colour: {x: 0, y: 0.84, z: 0.7}
+    colour: {x: 1, y: 1, z: 1}
     emissionColour: {x: 4.45, y: 0.95, z: 0.72}
     emissionStrength: 2
-  - position: {x: 0, y: -10012.85, z: 0}
+  - position: {x: -39.21, y: -10003.58, z: 0}
     radius: 10000
     colour: {x: 0, y: 0, z: 1}
     emissionColour: {x: 4.45, y: 0.95, z: 0}
     emissionStrength: 0
-  numRays: 1
+  numRays: 10
   width: 1920
   height: 1080
+  frameNum: 1

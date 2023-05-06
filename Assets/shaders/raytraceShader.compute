@@ -32,7 +32,9 @@ int _Bounces;
 StructuredBuffer<Sphere> _Spheres;
 int _NumSpheres;
 int _NumRays;
+int _FrameNum;
 RWTexture2D<float4> Result;
+RWTexture2D<float4> _PrevFrame;
 
 // PCG from shadertoy.com / Sebastian Lague
 float randomNumber(inout uint state) {
@@ -132,7 +134,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     uint2 numPixels = uint2(width, height);
     uint2 pixelCoord = uv * numPixels;
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
-    uint rngState = pixelIndex;
+    uint rngState = pixelIndex + _FrameNum;
 
     float3 sum = float3(0, 0, 0);
     for (int i = 0; i < _NumRays; i++) {
@@ -140,5 +142,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     float3 output = sum/_NumRays;
-    Result[id.xy] = float4(output, 1);
+
+    float frameWeight = 1.0 / (_FrameNum + 1);
+    Result[id.xy] = _PrevFrame[id.xy];
+    _PrevFrame[id.xy] = _PrevFrame[id.xy] * (1-frameWeight) + float4(output, 1) * frameWeight;
 }

@@ -11,18 +11,30 @@ public struct Sphere {
     public float emissionStrength;
 }
 
+[System.Serializable]
+public struct Triangle {
+    public Vector3 p1;
+    public Vector3 p2;
+    public Vector3 p3;
+    public Vector3 colour;
+    public Vector3 emissionColour;
+    public float emissionStrength;
+}
+
 [ExecuteAlways, ImageEffectAllowedInSceneView]
 public class RayTraceCS : MonoBehaviour
 {
 
+    public Sphere[] spheres;
+    public Triangle[] tris;
     public ComputeShader shader;
     public int bounces;
-    public Sphere[] spheres;
     public int numRays;
     public int width;
     public int height;
     public int frameNum = 0;
     ComputeBuffer sphereBuffer;
+    ComputeBuffer triBuffer;
     RenderTexture prevFrame;
 
     public void Start() {
@@ -43,10 +55,15 @@ public class RayTraceCS : MonoBehaviour
         shader.SetInt("_NumRays", numRays);
         shader.SetInt("_FrameNum", frameNum++);
         shader.SetInt("_NumSpheres", spheres.Length);
+        shader.SetInt("_NumTris", tris.Length);
 
         sphereBuffer = new ComputeBuffer(spheres.Length, sizeof(float) * 11);
         sphereBuffer.SetData(spheres);
         shader.SetBuffer(0, "_Spheres", sphereBuffer);
+
+        triBuffer = new ComputeBuffer(tris.Length, sizeof(float) * 16);
+        triBuffer.SetData(tris);
+        shader.SetBuffer(0, "_Triangles", triBuffer);
 
         RenderTexture rt = new RenderTexture(width, height, 0);
         rt.enableRandomWrite = true;
@@ -61,6 +78,7 @@ public class RayTraceCS : MonoBehaviour
         Graphics.Blit(rt, dest);
         rt.Release();
         sphereBuffer.Release();
+        triBuffer.Release();
     }
 
     public void OnDestroy() {

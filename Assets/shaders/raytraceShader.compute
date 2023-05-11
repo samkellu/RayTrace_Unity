@@ -26,10 +26,21 @@ struct RayCollision {
     float emissionStrength;
 };
 
+struct Triangle {
+    float3 p1;
+    float3 p2;
+    float3 p3;
+    float3 colour;
+    float3 emissionColour;
+    float emissionStrength;
+};
+
 float4x4 _CameraToWorld;
 float3 _ViewParams;
 int _Bounces;
 StructuredBuffer<Sphere> _Spheres;
+StructuredBuffer<Triangle> _Triangles;
+int _NumTris;
 int _NumSpheres;
 int _NumRays;
 int _FrameNum;
@@ -55,7 +66,7 @@ float3 randomHemisphereDirection(float3 hitNormal, inout uint rngState) {
     return newDir;// * sign(dot(hitNormal, newDir));
 }
 
-RayCollision sphereCollision(Ray ray) {
+RayCollision SphereCollision(Ray ray) {
 
     RayCollision closestIntersect;
     closestIntersect.distance = 1.#INF;
@@ -92,13 +103,71 @@ RayCollision sphereCollision(Ray ray) {
     return closestIntersect;
 }
 
+RayCollision TriCollision(Ray ray) {
+
+    RayCollision closestIntersect;
+    closestIntersect.distance = 1.#INF;
+
+    for (int i = 0; i < _NumTris; i++) {
+
+        Triangle tri = _Triangles[i];
+
+        float3 planeNormal = cross(tri.p2 - tri.p1, tri.p3 - tri.p1);
+
+        // Ray and plane are parallel, and do not intersect
+        if (dot(planeNormal, ray.dir) == 0) {
+            continue;
+        }
+
+        // distance from origin to the plane parallel to the plane normal
+        float3 d = -dot(planeNormal, tri.p1);
+
+        // distance along the ray to intersect the plane
+        float t = -(dot(planeNormal, ray.src) + d) / dot(planeNormal, ray.dir);
+
+        // triangle is behind the camera
+        if (t < 0) {
+            continue;
+        }
+
+        float3 p = ray.src + t * ray.dir;
+        
+        float3 e1 = tri.p2 - tri.p1;
+        float3 e2 = tri.p3 - tri.p2;
+        float3 e3 = tri.p1 - tri.p3;
+
+        float3 hitVec1 = p - tri.p1;
+        float3 hitVec2 = p - tri.p2;
+        float3 hitVec3 = p - tri.p3;
+
+        // in-out test for whether the hit point of the ray on the plane is within the triangle or not
+        if (dot(planeNormal, cross(e1, hitVec1)) > 0 && dot(planeNormal, cross(e2, hitVec2)) > 0 && dot(planeNormal, cross(e3, hitVec3)) > 0) {
+            if (t < closestIntersect.distance) {
+                closestIntersect.distance = t;
+                closestIntersect.position = p;
+                closestIntersect.normal = planeNormal;
+                closestIntersect.colour = tri.colour;
+                closestIntersect.emissionColour = tri.emissionColour;
+                closestIntersect.emissionStrength = tri.emissionStrength;
+            } 
+        }
+    }
+
+    return closestIntersect;
+}
+
 float3 Trace(Ray ray, inout uint rngState) {
 
     float3 colour = float3(1,1,1);
     float3 light = float3(0,0,0);
 
     for (int i = 0; i < _Bounces; i++) {
-        RayCollision rc = sphereCollision(ray);
+        RayCollision rc = SphereCollision(ray);
+        RayCollision rcTri = TriCollision(ray);
+
+        if (rcTri.distance < rc.distance) {
+            rc = rcTri;
+        }
 
         if (rc.distance < 1.#INF) {
             ray.src = rc.position;
@@ -109,6 +178,7 @@ float3 Trace(Ray ray, inout uint rngState) {
             colour *= rc.colour;
             
         } else {
+            // light += float3(0,0,0.5) * colour;
             break;
         }
     }
@@ -134,7 +204,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     uint2 numPixels = uint2(width, height);
     uint2 pixelCoord = uv * numPixels;
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
-    uint rngState = pixelIndex + _FrameNum;
+    uint rngState = pixelIndex + _FrameNum * 8901724;
 
     float3 sum = float3(0, 0, 0);
     for (int i = 0; i < _NumRays; i++) {

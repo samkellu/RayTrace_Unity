@@ -63,7 +63,7 @@ float3 randomHemisphereDirection(float3 hitNormal, inout uint rngState) {
     float z = randomNumber(rngState);
     float3 newDir = normalize(float3(x, y, z));
 
-    return newDir;// * sign(dot(hitNormal, newDir));
+    return newDir * sign(dot(hitNormal, newDir));
 }
 
 RayCollision SphereCollision(Ray ray) {
@@ -156,6 +156,10 @@ RayCollision TriCollision(Ray ray) {
     return closestIntersect;
 }
 
+float3 TempSkyboxSample(Ray ray) {
+    return lerp(float3(0.9f, 0.9f, 0.9f), float3(0.55f, 0.7f, 0.95f), smoothstep(-0.01, 0, ray.dir.y));
+}
+
 float3 Trace(Ray ray, inout uint rngState) {
 
     float3 colour = float3(1,1,1);
@@ -163,22 +167,23 @@ float3 Trace(Ray ray, inout uint rngState) {
 
     for (int i = 0; i < _Bounces; i++) {
         RayCollision rc = SphereCollision(ray);
-        RayCollision rcTri = TriCollision(ray);
+        // RayCollision rcTri = TriCollision(ray);
 
-        if (rcTri.distance < rc.distance) {
-            rc = rcTri;
-        }
+        // if (rcTri.distance < rc.distance) {
+            // rc = rcTri;
+        // }
 
         if (rc.distance < 1.#INF) {
+
+           
             ray.src = rc.position;
             ray.dir = randomHemisphereDirection(rc.normal, rngState);
             // ray.dir = reflect(ray.dir, rc.normal);
-
+            float lightIntensity = dot(ray.dir, rc.normal);
             light += rc.emissionColour * rc.emissionStrength * colour;
-            colour *= rc.colour;
-            
+            colour *= rc.colour * lightIntensity;
         } else {
-            // light += float3(0,0,0.5) * colour;
+            light += TempSkyboxSample(ray) * colour;
             break;
         }
     }
@@ -204,7 +209,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     uint2 numPixels = uint2(width, height);
     uint2 pixelCoord = uv * numPixels;
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
-    uint rngState = pixelIndex + _FrameNum * 8901724;
+    uint rngState = pixelIndex + _FrameNum * 7777;
 
     float3 sum = float3(0, 0, 0);
     for (int i = 0; i < _NumRays; i++) {
@@ -214,6 +219,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 output = sum/_NumRays;
 
     float frameWeight = 1.0 / (_FrameNum + 1);
-    Result[id.xy] = _PrevFrame[id.xy];
-    _PrevFrame[id.xy] = _PrevFrame[id.xy] * (1-frameWeight) + float4(output, 1) * frameWeight;
+    Result[id.xy] = _PrevFrame[id.xy] * (1 - frameWeight) + float4(output, 1) * frameWeight;
+    _PrevFrame[id.xy] = _PrevFrame[id.xy] * (1 - frameWeight) + float4(output, 1) * frameWeight;
 }

@@ -67,7 +67,7 @@ public class RayTraceCS : MonoBehaviour
         prevFrame = new RenderTexture(width, height, 0);
         prevFrame.enableRandomWrite = true;
         prevFrame.Create();
-        tris = FileToTris(fp);
+        // tris = FileToTris(fp);
     }
 
     public Triangle[] FileToTris(string fp) {
@@ -131,9 +131,9 @@ public class RayTraceCS : MonoBehaviour
         sphereBuffer.SetData(spheres);
         shader.SetBuffer(0, "_Spheres", sphereBuffer);
 
-        triBuffer = new ComputeBuffer(tris.Length, sizeof(float) * 16);
-        triBuffer.SetData(tris);
-        shader.SetBuffer(0, "_Triangles", triBuffer);
+        // triBuffer = new ComputeBuffer(tris.Length, sizeof(float) * 16);
+        // triBuffer.SetData(tris);
+        // shader.SetBuffer(0, "_Triangles", triBuffer);
 
         RenderTexture rt = new RenderTexture(width, height, 0);
         rt.enableRandomWrite = true;
@@ -148,7 +148,7 @@ public class RayTraceCS : MonoBehaviour
         Graphics.Blit(rt, dest);
         rt.Release();
         sphereBuffer.Release();
-        triBuffer.Release();
+        // triBuffer.Release();
     }
 
     public void OnDestroy() {
